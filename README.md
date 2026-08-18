@@ -1,7 +1,8 @@
 # CUDA-CIC: GPU-Accelerated Type Checker for Lean4
 
-World's first GPU-native implementation of the Calculus of Inductive Constructions (CIC).
-Type-check millions of proof terms per second on CUDA. Designed as a batch verification backend for AI proof assistants.
+> **Research status:** experimental CUDA backend for a selected Lean4/CIC fragment. It is not a replacement for Lean's trusted kernel, and benchmark or correctness claims should be interpreted only within the tested fragment.
+Experimental GPU-native implementation of selected Calculus of Inductive Constructions (CIC) operations.
+It is designed to explore batch proof-term verification on CUDA for AI-assisted theorem-proving workloads. Performance depends on the supported fragment, batch shape, GPU, CUDA/PyTorch versions, and runtime configuration.
 
 ## The Problem
 
@@ -15,10 +16,10 @@ CUDA-CIC moves the entire CIC type checking pipeline to the GPU:
 - **WHNF reduction**: Beta, Delta, Zeta, NatLit computation — all on GPU
 - **Definitional equality**: Evaluate and compare expressions (Nat arithmetic, Bool logic)
 - **De Bruijn substitution**: Proper variable substitution with GPU-native bounded stack
-- **Universe polymorphism**: Full universe level evaluation (zero/succ/max/imax/param)
+- **Universe polymorphism**: selected universe-level evaluation (zero/succ/max/imax, with parameter handling still limited)
 - **Lean4 integration**: Parse real Lean4 expression trees and type-check on GPU
 
-Everything is integer-only (no floating point), zero approximation, and 100% correct.
+The core representation uses integer encodings and the repository includes tests for the currently supported fragment. Passing those tests does not establish equivalence with the full Lean kernel.
 
 ## Architecture
 
@@ -125,7 +126,7 @@ Type class instances (`HAdd.hAdd`, `instHAdd`, etc.) are automatically resolved 
 
 ```bash
 # Clone
-git clone https://github.com/Tehlikeli107/cuda-cic.git
+git clone https://github.com/salihcankurnaz/cuda-cic.git
 cd cuda-cic
 
 # Run type checking benchmark
@@ -200,7 +201,7 @@ All kernels run entirely on GPU. No CPU in the hot path.
 - Iota reduction (recursor computation) handles Nat; general inductives use table-driven lookup
 - No mutual/nested inductives yet
 
-These are engineering tasks, not fundamental obstacles. Contributions welcome.
+These limitations define the current experimental scope. Contributions welcome.
 
 ## Citation
 
@@ -209,9 +210,9 @@ If you use CUDA-CIC in your research, please cite:
 ```bibtex
 @software{cuda-cic,
   title={CUDA-CIC: GPU-Accelerated Type Checker for Lean4's Type Theory},
-  author={Tehlikeli107},
+  author={Salih Can Kurnaz},
   year={2026},
-  url={https://github.com/Tehlikeli107/cuda-cic}
+  url={https://github.com/salihcankurnaz/cuda-cic}
 }
 ```
 
