@@ -1,0 +1,17 @@
+{
+  "repository": "salihcankurnaz/cuda-cic",
+  "branch": "master",
+  "commit_sha": "8a4e0c0b594e98aa9d3e615134a45c98ba8b0792",
+  "sources": {
+    "tests/benchmark.py": {
+      "bytes": 16496,
+      "sha256": "1c5e9f0fee1c1a1259d2cd283549f5418cfb22947c1d39931b0f53b3ca1a01cc"
+    },
+    "kernels/cic_type_check.cu": {
+      "bytes": 10576,
+      "sha256": "6fa6f0e6979a510be35180df3d9fd4e0ec4b62887e1a7d458fea255f95229159"
+    }
+  },
+  "git_status_before": "",
+  "git_status_after": ""
+}

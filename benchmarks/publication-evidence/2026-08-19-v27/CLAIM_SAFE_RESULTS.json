@@ -1,0 +1,122 @@
+{
+  "repository_commit": "8a4e0c0b594e98aa9d3e615134a45c98ba8b0792",
+  "correctness": {
+    "passed": 29,
+    "total": 29,
+    "scope": "Repository internal encoded-term expected-type suite only."
+  },
+  "kernel_only": [
+    {
+      "n": 50,
+      "median_ms": 0.16947200149297714,
+      "mean_ms": 0.17729535952210426,
+      "stdev_ms": 0.03751054133624277,
+      "p10_ms": 0.14223359674215316,
+      "p90_ms": 0.2080768033862114,
+      "min_ms": 0.11264000087976456,
+      "max_ms": 0.3266560137271881,
+      "proofs": 1000,
+      "median_proofs_per_sec": 5900679.7063256465,
+      "scope": "CUDA kernel only; tensors preallocated/pretransferred"
+    },
+    {
+      "n": 50,
+      "median_ms": 0.1889280006289482,
+      "mean_ms": 0.18273472011089326,
+      "stdev_ms": 0.04399841951559807,
+      "p10_ms": 0.12033279761672021,
+      "p90_ms": 0.22270400077104568,
+      "min_ms": 0.09216000139713287,
+      "max_ms": 0.32256001234054565,
+      "proofs": 10000,
+      "median_proofs_per_sec": 52930216.62596139,
+      "scope": "CUDA kernel only; tensors preallocated/pretransferred"
+    },
+    {
+      "n": 50,
+      "median_ms": 0.9774079918861389,
+      "mean_ms": 0.9815775978565217,
+      "stdev_ms": 0.01872768156259348,
+      "p10_ms": 0.9635776042938233,
+      "p90_ms": 0.9967616140842438,
+      "min_ms": 0.9564160108566284,
+      "max_ms": 1.060863971710205,
+      "proofs": 100000,
+      "median_proofs_per_sec": 102311420.4407378,
+      "scope": "CUDA kernel only; tensors preallocated/pretransferred"
+    },
+    {
+      "n": 50,
+      "median_ms": 3.9772160053253174,
+      "mean_ms": 3.9998054265975953,
+      "stdev_ms": 0.08510987574308256,
+      "p10_ms": 3.931955099105835,
+      "p90_ms": 4.046028804779053,
+      "min_ms": 3.92192006111145,
+      "max_ms": 4.357120037078857,
+      "proofs": 500000,
+      "median_proofs_per_sec": 125716078.61642969,
+      "scope": "CUDA kernel only; tensors preallocated/pretransferred"
+    },
+    {
+      "n": 50,
+      "median_ms": 7.833039999008179,
+      "mean_ms": 7.842738561630249,
+      "stdev_ms": 0.04837250738522037,
+      "p10_ms": 7.803449440002442,
+      "p90_ms": 7.889407968521119,
+      "min_ms": 7.7761921882629395,
+      "max_ms": 8.032256126403809,
+      "proofs": 1000000,
+      "median_proofs_per_sec": 127664355.10690872,
+      "scope": "CUDA kernel only; tensors preallocated/pretransferred"
+    }
+  ],
+  "end_to_end": [
+    {
+      "n": 20,
+      "median_ms": 5.440299981273711,
+      "mean_ms": 5.1379599899519235,
+      "stdev_ms": 1.1277886807321387,
+      "p10_ms": 3.3672799239866436,
+      "p90_ms": 6.294390058610588,
+      "min_ms": 3.027800004929304,
+      "max_ms": 6.968399975448847,
+      "proofs": 1000,
+      "median_proofs_per_sec": 183813.39327649996,
+      "scope": "Python list + NumPy + H2D + kernel + sync + one-value D2H"
+    },
+    {
+      "n": 20,
+      "median_ms": 41.83105000993237,
+      "mean_ms": 40.968460019212216,
+      "stdev_ms": 6.659156317849583,
+      "p10_ms": 32.34479007078335,
+      "p90_ms": 49.51319006504491,
+      "min_ms": 31.78940003272146,
+      "max_ms": 53.19750006310642,
+      "proofs": 10000,
+      "median_proofs_per_sec": 239056.87276856782,
+      "scope": "Python list + NumPy + H2D + kernel + sync + one-value D2H"
+    },
+    {
+      "n": 20,
+      "median_ms": 443.44784994609654,
+      "mean_ms": 443.7828450114466,
+      "stdev_ms": 37.11156753470832,
+      "p10_ms": 405.23306004470214,
+      "p90_ms": 472.795680037234,
+      "min_ms": 356.27450002357364,
+      "max_ms": 521.5553999878466,
+      "proofs": 100000,
+      "median_proofs_per_sec": 225505.65982483744,
+      "scope": "Python list + NumPy + H2D + kernel + sync + one-value D2H"
+    }
+  ],
+  "explicit_exclusions": [
+    "full Lean kernel semantic equivalence",
+    "world-first or prior-art claims",
+    "Lean-vs-GPU speedup ratios",
+    "universal performance claims"
+  ]
+}

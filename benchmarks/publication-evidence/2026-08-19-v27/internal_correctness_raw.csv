@@ -1,0 +1,30 @@
+case_index,name,got_type,expected_type,pass
+0,Sort(0),2,2,True
+1,Sort(1),3,3,True
+2,Nat,2,2,True
+3,Nat.zero,10,10,True
+4,Nat.succ,2174068,2174068,True
+5,Bool,2,2,True
+6,Bool.true,11,11,True
+7,Bool.false,11,11,True
+8,Nat.add,2205674,2205674,True
+9,Nat.mul,2205674,2205674,True
+10,Bool.not,3125478,3125478,True
+11,S(0),10,10,True
+12,S(S(0)),10,10,True
+13,S(S(S(0))),10,10,True
+14,100 : Nat,10,10,True
+15,id_Nat : Nat->Nat,2174068,2174068,True
+16,id_Bool : Bool->Bool,3125478,3125478,True
+17,const : Nat->Nat->Nat,2205674,2205674,True
+18,id_Nat 0 : Nat,10,10,True
+19,Nat.succ 0 : Nat,10,10,True
+20,Nat.add 0 : Nat->Nat,2174068,2174068,True
+21,Nat.add 0 0 : Nat,10,10,True
+22,fun x => S(S(x)) : Nat->Nat,2174068,2174068,True
+23,let x=0 in S(x) : Nat,10,10,True
+24,Nat.rec 0 : Nat,10,10,True
+25,INVALID: S(true),0,0,True
+26,"INVALID: App(0,0)",0,0,True
+27,INVALID: id_Bool 0,0,0,True
+28,INVALID: S(S(true)),0,0,True

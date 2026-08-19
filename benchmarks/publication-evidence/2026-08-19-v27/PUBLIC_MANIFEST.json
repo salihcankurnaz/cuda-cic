@@ -1,0 +1,62 @@
+{
+  "artifact_version": "v28.2-public-preview",
+  "source_capture_version": "v27",
+  "repository": "salihcankurnaz/cuda-cic",
+  "target_branch": "master",
+  "expected_head_sha": "8a4e0c0b594e98aa9d3e615134a45c98ba8b0792",
+  "target_directory": "benchmarks/publication-evidence/2026-08-19-v27",
+  "files": [
+    {
+      "path": "CLAIM_SAFE_RESULTS.json",
+      "bytes": 4002,
+      "sha256": "4ad6c238254fe5e3a7a0a33732eca32591d0665fdd1726be84961698135bc75b"
+    },
+    {
+      "path": "environment.json",
+      "bytes": 1219,
+      "sha256": "2b54224e20c08a682bc6c8b29fb04d2ac6eeeafb19b5245e4411fa25204541d4"
+    },
+    {
+      "path": "gpu_end_to_end_raw_rounds.csv",
+      "bytes": 6303,
+      "sha256": "3fb2c58a335836e5621d77d7a87afc43aeb9b45cbd195eb57b1841c1b0cac00b"
+    },
+    {
+      "path": "gpu_end_to_end_summary.csv",
+      "bytes": 738,
+      "sha256": "d8b18196932a78eef951598fa3b7ede3f9c860d9d49b631b9ad60d08db3ec7b4"
+    },
+    {
+      "path": "gpu_kernel_raw_rounds.csv",
+      "bytes": 25519,
+      "sha256": "84ad325bb7a4a6cbfa341842b31221a61188124b3f4b1ab542137734820e0ddb"
+    },
+    {
+      "path": "gpu_kernel_summary.csv",
+      "bytes": 1177,
+      "sha256": "5e9fa5564d74659bd79a56a9465ca8af82b76c8f20aa8be82d00afa2266a3b7a"
+    },
+    {
+      "path": "internal_correctness_raw.csv",
+      "bytes": 941,
+      "sha256": "bde8e17a41d663613d1d928e40fe2f142d64405efd953ca0a9a4021103e65ac7"
+    },
+    {
+      "path": "README.md",
+      "bytes": 2634,
+      "sha256": "aef11267852022db055534dc15b966dfd534f74928e2d9681569dbc7d378d548"
+    },
+    {
+      "path": "source_hashes.json",
+      "bytes": 486,
+      "sha256": "202be5506d4c598e2dd6452e5aa225eaf5f2c42337d4aa01bab6a9ce5ed98953"
+    }
+  ],
+  "public_sanitization": {
+    "removed": [
+      "absolute local Python executable/user path",
+      "localized MSVC compiler banner text (encoding-sensitive)"
+    ],
+    "tokens_or_secrets_found": false
+  }
+}

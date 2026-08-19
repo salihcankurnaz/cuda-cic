@@ -1,0 +1,20 @@
+{
+  "captured_at": "2026-08-19T03:11:43+03:00",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+  "torch_version": "2.6.0+cu124",
+  "torch_cuda_version": "12.4",
+  "cuda_available": true,
+  "gpu_name": "NVIDIA GeForce RTX 4070 Laptop GPU",
+  "gpu_capability": [
+    8,
+    9
+  ],
+  "nvcc_version_output": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2026 NVIDIA Corporation\nBuilt on Tue_Jun__9_14:30:19_Pacific_Daylight_Time_2026\nCuda compilation tools, release 13.3, V13.3.73\nBuild cuda_13.3.r13.3/compiler.38244171_0",
+  "lean_version_output": "Lean (version 4.33.0, x86_64-w64-windows-gnu, commit d8b18978322de05a8f3dba51ef03cf5461676c17, Release)",
+  "telemetry_before": "NVIDIA GeForce RTX 4070 Laptop GPU, 610.88, 49, 15.05, [N/A], 1980, 8001, 1129, 8188, 0",
+  "telemetry_after": "NVIDIA GeForce RTX 4070 Laptop GPU, 610.88, 48, 5.59, [N/A], 675, 810, 1098, 8188, 65",
+  "note": "Absolute local executable/user paths and localized compiler banner text were intentionally omitted from the public artifact.",
+  "msvc_compiler_version": "19.44.35226 (x64)",
+  "msvc_localized_console_output_omitted": true
+}
