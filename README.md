@@ -1,215 +1,150 @@
-# CUDA-CIC: GPU-Accelerated Type Checker for Lean4
+# CUDA-CIC: Experimental GPU Type Checking for a Lean4/CIC Fragment
 
-> **Research status:** experimental CUDA backend for a selected Lean4/CIC fragment. It is not a replacement for Lean's trusted kernel, and benchmark or correctness claims should be interpreted only within the tested fragment.
-Experimental GPU-native implementation of selected Calculus of Inductive Constructions (CIC) operations.
-It is designed to explore batch proof-term verification on CUDA for AI-assisted theorem-proving workloads. Performance depends on the supported fragment, batch shape, GPU, CUDA/PyTorch versions, and runtime configuration.
+> **Research status:** experimental CUDA backend for a selected Lean4/CIC fragment. It is not a replacement for Lean's trusted kernel, and correctness/performance claims apply only to the explicitly tested representation, fragment, fixtures, and benchmark setup.
 
-## The Problem
+CUDA-CIC explores whether selected Calculus of Inductive Constructions (CIC) operations can be represented and evaluated in batches on CUDA for AI-assisted theorem-proving workloads.
 
-AI proof assistants (AlphaProof, LeanDojo, ReProver) generate thousands of proof candidates that must be type-checked. Lean4's kernel is CPU-sequential — one proof at a time. This creates a bottleneck when an AI model proposes 10,000+ candidate proofs and needs to know which ones are valid.
+## Scope
 
-## The Solution
+The repository currently experiments with GPU implementations of selected operations including:
 
-CUDA-CIC moves the entire CIC type checking pipeline to the GPU:
+- **Type checking:** Sort hierarchy, Pi, Lambda, Application, Let, selected constants and inductive encodings;
+- **WHNF reduction:** bounded beta/delta/zeta reduction and selected NatLit computation;
+- **Definitional equality:** evaluation/comparison for the supported encoded fragment;
+- **De Bruijn substitution:** bounded iterative substitution on the GPU representation;
+- **Universe levels:** selected `zero` / `succ` / `max` / `imax` handling, with parameter handling still limited;
+- **Lean4 export integration:** conversion of selected exported Lean expression trees into the repository's flat representation.
 
-- **Type checking**: Sort hierarchy, Pi types, Lambda, Application, Let, Constants, Inductives
-- **WHNF reduction**: Beta, Delta, Zeta, NatLit computation — all on GPU
-- **Definitional equality**: Evaluate and compare expressions (Nat arithmetic, Bool logic)
-- **De Bruijn substitution**: Proper variable substitution with GPU-native bounded stack
-- **Universe polymorphism**: selected universe-level evaluation (zero/succ/max/imax, with parameter handling still limited)
-- **Lean4 integration**: Parse real Lean4 expression trees and type-check on GPU
+This is **not** a complete implementation of Lean4's kernel or all of CIC. Passing the repository tests does not establish semantic equivalence with Lean's trusted kernel outside the tested fixtures and supported fragment.
 
-The core representation uses integer encodings and the repository includes tests for the currently supported fragment. Passing those tests does not establish equivalence with the full Lean kernel.
+## Representation
 
-## Architecture
+Each encoded expression node uses seven integer fields:
 
-```
-Lean4 Export → Parser → Flat Node Array → GPU Kernels → Results
-                 ↓              ↓                ↓
-          Env Builder    De Bruijn     ┌─────────┴─────────┐
-          (50+ consts)   Resolution    │         │         │
-                                     WHNF    TypeCheck   DefEq
-                                    (beta,    (CIC      (evaluate
-                                    delta,    rules)    + compare)
-                                    zeta)
-```
-
-### GPU Node Encoding
-
-Each expression node = 7 integers:
-
-```
+```text
 [node_type, child1, child2, child3, aux1, aux2, level]
 ```
 
-- Type = integer ID (deterministic hash, no collision for practical sizes)
-- Arrow(A,B) = hash(A,B) with reverse lookup table on GPU
-- Type equality = integer == (exact, one GPU cycle)
-- Level-by-level kernel: leaves first, then internal nodes, one kernel launch per level
+The experimental kernels then operate over flat arrays of these nodes. This representation enables batch-oriented GPU evaluation but also imposes bounded-resource and feature-coverage limits that differ from Lean's kernel.
 
-### WHNF Reduction (GPU-native)
+## Implemented experimental components
 
-The key innovation: WHNF is traditionally recursive, but our kernel uses iterative bounded-depth reduction with max 16 steps per term. Each GPU thread handles one proof term independently.
+### WHNF
 
-- **Beta**: `App(Lam(body), arg)` → substitute via de Bruijn stack
-- **Delta**: `Const(f)` → unfold definition
-- **Zeta**: `Let(x, val, body)` → substitute
-- **NatLit**: `S(42)` → `43` (direct integer arithmetic)
+The CUDA path uses bounded iterative reduction rather than general recursive evaluation. The current implementation includes selected:
 
-### De Bruijn Substitution Engine (NEW in v2)
+- beta reduction;
+- delta unfolding;
+- zeta reduction;
+- Nat literal computation.
 
-GPU-native substitution using bounded iterative traversal:
+### De Bruijn substitution
 
-```
-subst(body, var_depth, replacement):
-  BVAR(i) where i == depth  → replacement (with shifting)
-  BVAR(i) where i > depth   → BVAR(i-1) (free variable adjustment)
-  Under binder              → depth + 1 (recurse with incremented depth)
-```
+The repository contains a bounded iterative substitution engine with a private per-thread work stack. This is designed to cover the repository's current fixtures; it should not be read as a proof of unrestricted substitution support.
 
-- Each thread gets a private work stack (max 128 entries)
-- No recursion needed — fully iterative
-- Handles nested lambdas correctly
+### Universe-level evaluation
 
-### Universe Polymorphism (NEW in v2)
+The project contains experimental handling for concrete universe-level expressions such as `zero`, `succ`, `max`, and `imax`. Parameter substitution remains limited/work-in-progress.
 
-Full universe level expression evaluator:
+### Constant environment
 
-```
-Universe levels:
-  zero, succ(u), max(u,v), imax(u,v), param(name)
+`lean4/env_builder.py` builds the encoded constant environment used by the test and export pipeline. The environment is intentionally much smaller than the full Lean ecosystem.
 
-imax special rule:
-  imax(u, 0) = 0           (Prop-valued functions stay in Prop)
-  imax(u, succ(v)) = max(u, succ(v))
-```
+## Tested fixtures
 
-### Constant Environment (NEW in v2)
+The repository includes exported/test fixtures involving examples such as:
 
-Auto-built from Lean4 constants — no manual registration:
+- `Nat.add_comm`
+- `Nat.add_zero`
+- `Nat.zero_add`
+- `Nat.add_assoc`
+- `Nat.succ_add`
+- `Nat.mul_comm`
 
-```
-CIC Environment: 39 constants (32 with known types)
-  [  0] Nat              : Type
-  [  3] Nat.zero         : Nat
-  [  4] Nat.succ         : Nat→Nat
-  [  5] Nat.add          : Nat→Nat→Nat
-  [ 17] HAdd.hAdd        : Nat→Nat→Nat  (resolved)
-  [ 31] Eq               : Type
-  [ 32] Eq.refl          : Nat→Prop
-  ...
-```
+A successful result on these fixtures means the repository's current encoded pipeline produced the expected result for those cases. It does **not** establish that arbitrary Lean theorems or complete libraries can be checked correctly by CUDA-CIC.
 
-Type class instances (`HAdd.hAdd`, `instHAdd`, etc.) are automatically resolved to their concrete operations.
+## Reproducible benchmark evidence
 
-## Successfully Type-Checked on GPU
+Publication-oriented benchmark evidence is committed under:
 
-| Theorem | Nodes | Result |
-|---------|-------|--------|
-| `Nat.add_comm` | 43 | → Prop ✓ |
-| `Nat.add_zero` | 33 | → Prop ✓ |
-| `Nat.zero_add` | 33 | → Prop ✓ |
-| `Nat.add_assoc` | 77 | → Prop ✓ |
-| `Nat.succ_add` | 47 | → Prop ✓ |
-| `Nat.mul_comm` | 43 | → Prop ✓ |
+[`benchmarks/publication-evidence/2026-08-19-v27/`](benchmarks/publication-evidence/2026-08-19-v27/)
 
-## Requirements
+That artifact records the tested source revision, environment, raw measurements, and claim limitations. Benchmark results should be cited from that evidence rather than generalized to other GPUs, term distributions, or unsupported Lean/CIC features.
 
-- NVIDIA GPU (Compute Capability 7.0+)
-- CUDA Toolkit 12.0+
-- PyTorch 2.0+ with CUDA
+## Continuous integration
+
+GitHub Actions performs **CPU-safe validation only**:
+
+- Python source compilation for CPU-visible project code;
+- JSON/CSV parsing of committed publication-evidence files.
+
+The CI workflow intentionally does **not** execute CUDA extension compilation, GPU correctness tests, or GPU benchmarks on standard GitHub-hosted CPU runners. GPU-dependent tests still require an appropriate NVIDIA/CUDA environment.
+
+## Requirements for GPU experiments
+
+- NVIDIA GPU
+- CUDA Toolkit compatible with the installed PyTorch build
+- PyTorch with CUDA support
 - Python 3.10+
-- Lean4 (for export only, not needed for type checking)
-- MSVC (Windows) or GCC (Linux) for CUDA kernel compilation
+- a compatible C++/CUDA compiler toolchain
+- Lean4 only for workflows that export Lean expressions
 
-## Quick Start
+## Quick start
 
 ```bash
-# Clone
 git clone https://github.com/salihcankurnaz/cuda-cic.git
 cd cuda-cic
 
-# Run type checking benchmark
-python tests/test_type_check.py
-
-# Run WHNF test
-python tests/test_whnf.py
-
-# Run definitional equality test
-python tests/test_defeq.py
-
-# Run environment & substitution tests (no GPU required)
+# Environment/substitution test with CPU-visible logic
 python tests/test_subst_env.py
 
-# Run full benchmark (includes CPU vs GPU comparison)
+# GPU-dependent experiments (require CUDA)
+python tests/test_type_check.py
+python tests/test_whnf.py
+python tests/test_defeq.py
+python tests/test_engine.py
 python tests/benchmark.py
-
-# Type-check real Lean4 theorems
-python lean4_to_gpu.py
-
-# Run proof generation + GPU verification
-python cuda_prover.py
 ```
 
-## Project Structure
+## Project structure
 
-```
+```text
 cuda-cic/
-  kernels/
-    cic_type_check.cu    # Core CIC type checking kernel
-    cic_whnf.cu          # WHNF reduction kernel (beta/delta/zeta)
-    cic_defeq.cu         # Definitional equality kernel
-    cic_full.cu          # Full kernel with general inductive types
-    cic_subst.cu         # [NEW] De Bruijn substitution engine
-    cic_universe.cu      # [NEW] Universe level evaluator
-  lean4/
-    export_trees.lean    # Lean4 metaprogram to export expression trees
-    exported_trees.txt   # Pre-exported trees for 6 theorems
-    env_builder.py       # [NEW] Auto-build GPU constant environment
-  tests/
-    test_type_check.py   # 16 test cases, 100% pass
-    test_whnf.py         # 8 test cases, 100% pass
-    test_defeq.py        # 21 test cases, 100% pass
-    test_subst_env.py    # [NEW] 73 test cases, 100% pass
-    benchmark.py         # CPU vs GPU benchmark
-  cuda_prover.py         # Type-directed proof generation + GPU verification
-  lean4_to_gpu.py        # Full pipeline: Lean4 export → GPU type check
+  kernels/            # experimental CUDA kernels
+  lean4/              # export fixtures and encoded environment tooling
+  tests/              # CPU-visible and CUDA-dependent tests/benchmarks
+  benchmarks/         # committed publication evidence
+  cuda_prover.py      # experimental proof-generation/verification tooling
+  lean4_to_gpu.py     # Lean export -> encoded GPU pipeline experiments
 ```
 
-## How It Works
+## Current limitations
 
-1. **Lean4 exports** theorem types as expression trees (FORALL, APP, CONST, BVAR, etc.)
-2. **Environment builder** auto-registers all referenced constants with their types
-3. **Parser** converts trees to flat integer arrays with proper de Bruijn resolution
-4. **WHNF kernel** reduces terms (beta/delta/zeta) in parallel across all proofs
-5. **Type check kernel** processes nodes level-by-level (leaves → root)
-6. **DefEq kernel** evaluates and compares expressions for definitional equality
+- only a selected CIC/Lean4 fragment is represented;
+- reduction/substitution paths use explicit bounds;
+- universe-parameter support is incomplete;
+- iota/general-inductive handling is limited;
+- no mutual/nested-inductive completeness claim;
+- no formal proof that the CUDA implementation is semantically equivalent to Lean's trusted kernel;
+- no claim that arbitrary Lean libraries can be batch-verified by the current implementation.
 
-All kernels run entirely on GPU. No CPU in the hot path.
+These limitations define the current research scope.
 
-## Use Cases
+## Potential research directions
 
-- **AI Proof Search**: Verify thousands of candidate proofs from neural theorem provers
-- **Batch Verification**: Type-check entire libraries in parallel
-- **Interactive Proving**: Real-time feedback for tactic suggestions
-- **Proof Mining**: Search for proofs by generating and filtering candidates at GPU speed
-
-## Limitations
-
-- Substitution is bounded-depth (covers common patterns, max 128 work items)
-- Universe polymorphism evaluator is new — handles concrete levels, param substitution is WIP
-- Iota reduction (recursor computation) handles Nat; general inductives use table-driven lookup
-- No mutual/nested inductives yet
-
-These limitations define the current experimental scope. Contributions welcome.
+- differential testing against an independent trusted/reference evaluator;
+- larger sets of semantic correspondence fixtures;
+- expanded Lean export coverage;
+- GPU throughput studies under explicitly defined term distributions;
+- proof-search pipelines that use the GPU path as an experimental filter while retaining trusted Lean verification.
 
 ## Citation
 
-If you use CUDA-CIC in your research, please cite:
+If you use this repository in research, cite the software and the exact benchmark/evidence revision used:
 
 ```bibtex
-@software{cuda-cic,
-  title={CUDA-CIC: GPU-Accelerated Type Checker for Lean4's Type Theory},
+@software{cuda_cic,
+  title={CUDA-CIC: Experimental GPU Type Checking for a Lean4/CIC Fragment},
   author={Salih Can Kurnaz},
   year={2026},
   url={https://github.com/salihcankurnaz/cuda-cic}
@@ -218,4 +153,4 @@ If you use CUDA-CIC in your research, please cite:
 
 ## License
 
-MIT
+MIT. See [`LICENSE`](LICENSE).
