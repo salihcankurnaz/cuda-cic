@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile CPU-visible sources
+        run: |
+          python -m py_compile cuda_prover.py lean4_to_gpu.py
+          python -m compileall -q lean4
+      - name: Validate publication evidence
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import csv
+          import json
+
+          root = Path("benchmarks/publication-evidence")
+          if not root.is_dir():
+              raise SystemExit("publication-evidence directory is missing")
+
+          json_files = sorted(root.rglob("*.json"))
+          csv_files = sorted(root.rglob("*.csv"))
+          if not json_files or not csv_files:
+              raise SystemExit("publication evidence must contain JSON and CSV files")
+
+          for path in json_files:
+              with path.open("r", encoding="utf-8-sig") as handle:
+                  json.load(handle)
+
+          for path in csv_files:
+              with path.open("r", encoding="utf-8-sig", newline="") as handle:
+                  if not next(csv.reader(handle), None):
+                      raise SystemExit(f"empty CSV evidence file: {path}")
+
+          print(f"validated {len(json_files)} JSON and {len(csv_files)} CSV evidence files")
+          PY
+      - name: GPU-test scope note
+        run: echo "CUDA kernel/integration tests are intentionally excluded from GitHub-hosted CPU runners."
