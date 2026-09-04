@@ -62,17 +62,32 @@ Lean 4.33.0 also documents recent kernel soundness fixes, reinforcing why negati
 
 - <https://lean-lang.org/doc/reference/latest/releases/v4.33.0/>
 
-### Related GPU/formal work found in the targeted search
+### Closest conceptual prior found
 
-The following are relevant but do not, from the reviewed public descriptions, establish the same claim as CUDA-CIC:
+A 2026 technical report, **“Type Checking as Reduction: A Lean-Formalized ICC Lane for GPU-Accelerated Proof Verification,”** directly develops a Lean-formalized interaction-combinator/interaction-net route intended to make proof checking parallelizable and GPU-suitable. The publicly surfaced report text describes Lean ↔ Rust cross-validation and a formally grounded foundation, but explicitly says it makes no premature performance/completeness claims and that the complete system is not publicly released.
+
+This is close enough conceptually that CUDA-CIC must **not** claim novelty for the generic idea of parallel/GPU-oriented dependent-type or proof verification. A defensible contribution would have to be narrower, for example a working CUDA checker for an explicitly specified Lean/CIC fragment together with external same-object semantic validation and reproducible measured throughput.
+
+Public report record surfaced during the audit:
+
+- <https://www.researchgate.net/publication/403194744_Type_Checking_as_Reduction_A_Lean-Formalized_ICC_Lane_for_GPU-Accelerated_Proof_Verication>
+
+A related March 2026 technical report on **parallelized proof verification for interactive tactic search in Lean 4** also demonstrates that parallel verification itself is active prior work:
+
+- <https://www.researchgate.net/publication/403379235_Parallelized_Proof_Verification_for_Interactive_Tactic_Search_in_Lean_4>
+
+These reports are part of the novelty boundary even if they are not peer-reviewed conference/journal publications.
+
+### Other related GPU/formal work
 
 - **TorchLean CUDA** uses CUDA for selected tensor/runtime operations while explicitly keeping CUDA machine code outside Lean's trusted kernel boundary: <https://lean-dojo.github.io/TorchLean/cuda/>
 - **Lean Copilot** uses local/cloud LLM inference, optionally on GPUs, for proof automation; this is GPU model inference rather than a GPU Lean kernel checker: <https://github.com/lean-dojo/LeanCopilot>
 - **Argument Computer `ix`** is a Lean proof-carrying-code platform with GPU proving through SP1/CUDA paths; its public description is a different proof-system architecture, not evidence of CUDA-CIC semantic equivalence: <https://github.com/argumentcomputer/ix>
 - **Kuiper** uses dependent types/separation logic to verify GPU programs and generate CUDA; it addresses correctness of GPU programs rather than moving a Lean/CIC checker onto the GPU: <https://github.com/FStarLang/kuiper>
 - **VerifiedGPU** and **Hesper** similarly study verified GPU programming or verified GPU kernels from Lean-side specifications rather than the exact CUDA-CIC checker problem.
+- **Certified SAT solving with GPU accelerated inprocessing** demonstrates a closely related methodological lesson: GPU acceleration in formal reasoning should be paired with independently checkable certificates rather than trusting GPU execution alone: <https://doi.org/10.1007/s10703-023-00432-z>
 
-A targeted search did **not** find a directly matching published system that clearly claims the same combination of a GPU-batched checker for a Lean/CIC fragment plus semantic differential validation against Lean. This is **not** a historical-priority proof and must not be phrased as “first,” “world first,” or “no prior work exists.”
+A targeted search did **not** establish historical priority for CUDA-CIC or prove the absence of another matching system. Do not use “first,” “world first,” or “no prior work exists.”
 
 ## Exact next experiment
 
