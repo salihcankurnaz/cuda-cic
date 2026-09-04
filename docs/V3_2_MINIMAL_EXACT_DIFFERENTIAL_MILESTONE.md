@@ -12,7 +12,7 @@ This milestone is intentionally narrow. It does **not** establish full Lean-kern
 
 Result ZIP SHA-256:
 
-`c9cc6f252bcc975f062b2eab2e6b090160922611344b628c5720f2a0d8ff5a61`
+`affd1f350128356710eb1c2ca6fa76f59ef87d8bf2ebbff554c36f936e064ce7`
 
 Result manifest: 8/8 payload files matched their recorded byte counts and SHA-256 hashes.
 
