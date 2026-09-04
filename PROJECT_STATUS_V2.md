@@ -1,73 +1,51 @@
-# CUDA-CIC v2: GPU-Native Formal Verification Status Report
+# CUDA-CIC v2 — Historical Status and Current Claim Boundary
 
-## 1. Projenin Evrimi: Demo’dan Silah Seviyesine
-Proje, basit bir GPU hızlandırma denemesinden (v1), Lean4'ün karmaşık tip teorisini (CIC) %100 doğrulukla ve devasa bir paralellikte işleyebilen tam teşekküllü bir motora (v2) dönüştürüldü.
+> **Status correction (2026-09-04):** this file originally contained development-era claims such as “100% correctness,” a large Lean-vs-GPU speedup ratio, world-first/superlative language, and wording suggesting broad Lean-kernel capability. Those claims are **not supported by the current publication evidence** and are withdrawn. The repository README and the frozen publication-evidence artifact define the public claim boundary.
 
-### v1 vs v2 Karşılaştırması
+## What is implemented
 
-| Özellik | v1 (Eski Durum) | v2 (Güncel Durum) |
-| :--- | :--- | :--- |
-| **Hız** | ~100k proofs/sec | **117M+ proofs/sec** (RTX 4070) |
-| **De Bruijn** | Sabit T_NAT ataması (Hatalı) | **Dinamik Context Stack** (Doğru) |
-| **Substitution** | Sadece basit kopyalama | **Bounded Stack Substitution Engine** |
-| **Sabitler** | Manuel 10 sabit | **Otomatik Env Builder** (50+ Sabit) |
-| **Pipeline** | Sadece teorem tipleri | **İspat Terimleri (Proof Terms)** + WHNF |
-| **AI Katmanı** | Rastgele üretim | **LLM Feedback Loop** |
+CUDA-CIC is an experimental CUDA backend for a selected encoded Lean/CIC fragment. The repository contains experimental support for:
 
----
+- Sort/Pi/Lambda/Application/Let forms;
+- selected constants and constructor encodings;
+- bounded WHNF reduction;
+- bounded substitution and de Bruijn handling;
+- selected definitional-equality paths;
+- selected universe-level operations;
+- Lean-expression export/parsing experiments;
+- batch-oriented CUDA execution.
 
-## 2. Teknik Mimari ve Yenilikler
+This is not a complete Lean 4 kernel and is not a drop-in trusted checker.
 
-### A. Unified CIC Engine (`cic_engine.cu`)
-Daha önce 4 farklı kısımdan oluşan doğrulama süreci, tek bir süper-kernel'de birleştirildi.
-- **WHNF (Weak Head Normal Form):** GPU üzerinde iteratif olarak beta, delta ve zeta indirgemeleri yapar.
-- **Substitution:** Özyinelemeli (recursive) yapıdan kaçınmak için GPU thread'lerine özel iş yığınları (work stacks) kullanır.
-- **DefEq (Definitional Equality):** İfadeleri indirger ve yapısal eşitliği (structural equality) milisaniyeler içinde kontrol eder.
+## Frozen evidence currently supported
 
-### B. Otomatik Çevresel Bilgi (`env_builder.py`)
-Lean4'ün devasa kütüphanesini GPU'ya bağlayan köprüdür.
-- Lean4'teki `HAdd.hAdd` gibi karmaşık "type class" yapılarını otomatik olarak CPU tarafında çözer ve GPU'ya en sade haliyle (`Nat.add`) aktarır.
-- Tüm sabitlerin hash değerlerini ve tip ağaçlarını belirler.
+The publication artifact under `benchmarks/publication-evidence/2026-08-19-v27/` supports only the following scoped statements:
 
-### C. Universe Polymorphism (`cic_universe.cu`)
-Lean4'ün en zor kısımlarından biri olan evren seviyelerini (Sort u) GPU'ya taşıdık.
-- `imax(u, v)` kuralları dahil evren aritmetiği artık GPU'da hesaplanıyor.
+- **29/29** cases passed in the repository's internal encoded-term expected-type suite.
+- At a batch size of **1,000,000 encoded inputs**, 50 CUDA-event rounds gave a median kernel-only time of **7.833040 ms**, or about **127.66 million encoded inputs/s** in that exact benchmark.
+- At **100,000 encoded inputs**, the recorded end-to-end Python/NumPy/H2D/kernel/sync/readback path had a median of **443.448 ms**, or about **225.5 thousand inputs/s**.
 
----
+These measurements are environment- and workload-specific. They do **not** establish semantic equivalence with Lean's trusted kernel, a Lean-vs-GPU speedup ratio, or universal performance.
 
-## 3. Performans ve Benchmarks (Güncel)
+## Scientific audit correction
 
-En son yapılan entegrasyon testlerinde elde edilen veriler:
+A 2026-09-04 source audit identified two important boundaries that must be resolved before stronger correctness claims:
 
-| Batch Size | İşlem Süresi (ms) | Kanıt/Saniye (PPS) |
-| :--- | :--- | :--- |
-| 10,000 | 0.567 ms | 17.6 M |
-| 100,000 | 1.039 ms | 96.2 M |
-| **1,000,000** | **8.523 ms** | **117.3 M** |
+1. `lean4_to_gpu.py` parses both theorem types and proof terms, but its current `main()` constructs the GPU batch from the parsed theorem **type** (`entry['type']`), not the proof term (`entry['proof']`). Therefore the current “real Lean4 theorems” path does not by itself demonstrate proof-term checking.
+2. The historical benchmark generates its CUDA inputs manually and creates a separate set of Lean CPU theorems. The two paths are not an identical-corpus differential checker test, so the historical CPU-vs-GPU ratio is not a scientifically valid kernel-equivalence or speedup result.
 
-> [!IMPORTANT]
-> Bu hız, standart Lean4 CPU çekirdeğine kıyasla yaklaşık **90,000 kat** daha hızlıdır.
+See `docs/SCIENTIFIC_AUDIT_2026-09-04.md` for the current research decision.
 
----
+## Next scientific gate
 
-## 4. LLM Entegrasyonu: `cuda_prover_llm.py`
-Projenin "akıllı" katmanı. 
-1. **Üretim:** LLM'e bir teorem sorulur.
-2. **Denetim:** LLM binden fazla çözüm önerisi üretir.
-3. **Filtreleme:** GPU bu binlerce öneriyi milisaniyeler içinde tarar ve sadece "mantıklı" olanları ayıklar.
-4. **Geri Bildirim:** Hatalı ispatlar varsa, GPU'dan gelen spesifik tip hatası LLM'e geri gönderilir ve modelin kendini düzeltmesi sağlanır.
+The next priority is **correctness before throughput**:
 
----
+1. create an explicit supported-fragment contract;
+2. feed the same exported proof objects to the reference checker and CUDA-CIC;
+3. include both accepted and deliberately rejected cases;
+4. record an exact accept/reject confusion matrix and failure classes;
+5. prefer an external corpus such as the supported subset of Lean Kernel Arena rather than only repository-authored fixtures;
+6. independently re-run accepted cases with Lean's official kernel and, where practical, an external checker such as `nanoda`;
+7. make performance comparisons only after semantic correspondence is established for the declared corpus.
 
-## 5. Tamamlanan ve Devam Eden İşler (Task Status)
-
-- [x] **Faz 1-3:** Substitution, De Bruijn, Universe ve Env Builder. (TAMAM)
-- [x] **Faz 4:** Unified Engine (WHNF + TypeCheck + DefEq). (TAMAM)
-- [x] **Faz 5:** LLM Entegrasyonu ve Feedback Döngüsü. (TAMAM)
-- [x] **Faz 6:** Genel İndüktif Tip Desteği (List, String vb. için genişletme). (TAMAMLANDI - String Literals eklendi, dinamik export eklendi. Recursor/Fold mantığı GPU WHNF'e eklenecek)
-- [ ] **Faz 7:** GPU Üzerinde Genel Recursor (N_REC) ve Pattern Matching WHNF İndirgemesi. (YENİ)
-
----
-
-## 6. Özet Sonuç
-Şu an elimizde, Lean4 matematik kütüphanesini GPU üzerinde devasa hızlarda denetleyebilen ve yapay zeka ile konuşabilen dünyanın en gelişmiş GPU-native CIC çekirdeklerinden biri bulunuyor. Proje, otonom matematiksel keşif (autonomous theorem proving) için gereken hız bariyerini tamamen yıkmıştır.
+Until that gate passes, CUDA-CIC should be described as an **experimental GPU batch evaluator/type checker for a selected encoded Lean/CIC fragment**.
